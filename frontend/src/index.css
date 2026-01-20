@@ -1,0 +1,458 @@
+@import url('https://api.fontshare.com/v2/css?f[]=satoshi@900,700,500,400,300&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+    margin: 0;
+    font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+    font-family: Monaco, 'Courier New', monospace;
+}
+
+@layer base {
+    :root {
+        /* Light Mode - Swiss High-Contrast Theme */
+        --background: 0 0% 98%;
+        --foreground: 240 10% 6%;
+        --card: 0 0% 100%;
+        --card-foreground: 240 10% 6%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 240 10% 6%;
+        --primary: 187 94% 43%;
+        --primary-foreground: 0 0% 100%;
+        --secondary: 240 5% 96%;
+        --secondary-foreground: 240 6% 10%;
+        --muted: 240 5% 94%;
+        --muted-foreground: 240 4% 46%;
+        --accent: 38 92% 50%;
+        --accent-foreground: 0 0% 100%;
+        --destructive: 0 84% 60%;
+        --destructive-foreground: 0 0% 98%;
+        --border: 240 6% 85%;
+        --input: 240 6% 85%;
+        --ring: 187 94% 43%;
+        --chart-1: 12 76% 61%;
+        --chart-2: 173 58% 39%;
+        --chart-3: 197 37% 24%;
+        --chart-4: 43 74% 66%;
+        --chart-5: 27 87% 67%;
+        --radius: 0.5rem;
+        --cyan: 187 94% 43%;
+        --indigo: 239 84% 67%;
+        --amber: 38 92% 50%;
+        
+        /* Light mode specific shadows */
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+        --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    }
+    
+    .dark {
+        --background: 240 10% 3.9%;
+        --foreground: 0 0% 98%;
+        --card: 240 10% 5.9%;
+        --card-foreground: 0 0% 98%;
+        --popover: 240 10% 5.9%;
+        --popover-foreground: 0 0% 98%;
+        --primary: 187 94% 43%;
+        --primary-foreground: 0 0% 100%;
+        --secondary: 240 3.7% 15.9%;
+        --secondary-foreground: 0 0% 98%;
+        --muted: 240 3.7% 15.9%;
+        --muted-foreground: 240 5% 64.9%;
+        --accent: 38 92% 50%;
+        --accent-foreground: 0 0% 100%;
+        --destructive: 0 62.8% 30.6%;
+        --destructive-foreground: 0 0% 98%;
+        --border: 240 3.7% 15.9%;
+        --input: 240 3.7% 15.9%;
+        --ring: 187 94% 43%;
+        --chart-1: 220 70% 50%;
+        --chart-2: 160 60% 45%;
+        --chart-3: 30 80% 55%;
+        --chart-4: 280 65% 60%;
+        --chart-5: 340 75% 55%;
+        
+        /* Dark mode specific shadows */
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+        --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.3);
+        --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+        --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+        --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.4), 0 8px 10px -6px rgb(0 0 0 / 0.3);
+    }
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+    body {
+        @apply bg-background text-foreground;
+    }
+    h1, h2, h3, h4, h5, h6 {
+        font-family: 'Satoshi', sans-serif;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+    }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.3);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* Noise Texture Overlay */
+.noise-overlay {
+    position: relative;
+}
+
+.noise-overlay::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Grid Pattern */
+.grid-pattern {
+    background-image: 
+        linear-gradient(to right, hsl(var(--border) / 0.1) 1px, transparent 1px),
+        linear-gradient(to bottom, hsl(var(--border) / 0.1) 1px, transparent 1px);
+    background-size: 40px 40px;
+}
+
+.dark .grid-pattern {
+    background-image: 
+        linear-gradient(to right, hsl(var(--border) / 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, hsl(var(--border) / 0.05) 1px, transparent 1px);
+}
+
+/* Glassmorphism */
+.glass {
+    background: hsl(var(--background) / 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid hsl(var(--border) / 0.5);
+}
+
+.dark .glass {
+    background: hsl(var(--background) / 0.7);
+}
+
+/* Light Mode Enhancements */
+:root {
+    /* Card shadows for light mode */
+    --card-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.08);
+    --card-shadow-hover: 0 10px 20px -5px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.05);
+}
+
+.dark {
+    --card-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.2);
+    --card-shadow-hover: 0 10px 20px -5px rgb(0 0 0 / 0.4), 0 4px 6px -2px rgb(0 0 0 / 0.2);
+}
+
+/* Selection */
+::selection {
+    background: hsl(var(--primary) / 0.3);
+    color: hsl(var(--foreground));
+}
+
+/* Focus Ring */
+*:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+}
+
+/* Monaco Editor Dark Theme */
+.monaco-editor .margin {
+    background: hsl(var(--card)) !important;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { 
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to { 
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideDown {
+    from { 
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to { 
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fadeIn {
+    animation: fadeIn 0.5s ease-out forwards;
+}
+
+.animate-slideUp {
+    animation: slideUp 0.5s ease-out forwards;
+}
+
+.animate-slideDown {
+    animation: slideDown 0.5s ease-out forwards;
+}
+
+/* Stagger Animation Delays */
+.stagger-1 { animation-delay: 0.1s; }
+.stagger-2 { animation-delay: 0.2s; }
+.stagger-3 { animation-delay: 0.3s; }
+.stagger-4 { animation-delay: 0.4s; }
+.stagger-5 { animation-delay: 0.5s; }
+
+/* Wrapper for debug */
+@layer base {
+    [data-debug-wrapper="true"] {
+        display: contents !important;
+    }
+}
+
+/* ===== Light Mode Specific Enhancements ===== */
+
+/* Better image overlays in light mode */
+:root .image-overlay {
+    background: linear-gradient(to bottom, transparent 0%, hsl(var(--background) / 0.8) 100%);
+}
+
+.dark .image-overlay {
+    background: linear-gradient(to bottom, transparent 0%, hsl(var(--background) / 0.9) 100%);
+}
+
+/* Light mode card enhancements */
+@layer components {
+    /* Card with proper light mode shadow */
+    .card-elevated {
+        @apply bg-card border border-border/50 rounded-xl;
+        box-shadow: var(--card-shadow);
+        transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+    }
+    
+    .card-elevated:hover {
+        box-shadow: var(--card-shadow-hover);
+        @apply border-primary/30;
+    }
+    
+    /* Button hover enhancement */
+    .btn-primary {
+        @apply bg-cyan-500 text-white font-medium;
+        box-shadow: 0 1px 2px 0 rgb(6 182 212 / 0.3);
+        transition: all 0.2s ease;
+    }
+    
+    .btn-primary:hover {
+        @apply bg-cyan-600;
+        box-shadow: 0 4px 12px 0 rgb(6 182 212 / 0.4);
+        transform: translateY(-1px);
+    }
+    
+    .btn-primary:active {
+        transform: translateY(0);
+        box-shadow: 0 1px 2px 0 rgb(6 182 212 / 0.3);
+    }
+    
+    /* Outline button for light mode */
+    .btn-outline {
+        @apply border-2 border-border bg-transparent font-medium;
+        transition: all 0.2s ease;
+    }
+    
+    :root .btn-outline {
+        @apply text-foreground;
+    }
+    
+    .btn-outline:hover {
+        @apply border-cyan-500 bg-cyan-500/5 text-cyan-600;
+    }
+    
+    .dark .btn-outline:hover {
+        @apply border-cyan-500 bg-cyan-500/10 text-cyan-400;
+    }
+    
+    /* Badge enhancements */
+    .badge-cyan {
+        @apply bg-cyan-500/10 text-cyan-600 border border-cyan-500/20;
+    }
+    
+    .dark .badge-cyan {
+        @apply bg-cyan-500/10 text-cyan-400 border-cyan-500/20;
+    }
+    
+    /* Section background for light mode */
+    .section-muted {
+        @apply bg-muted/50;
+    }
+    
+    .dark .section-muted {
+        @apply bg-muted/30;
+    }
+}
+
+/* Light mode specific text colors */
+:root {
+    --text-primary: 240 10% 6%;
+    --text-secondary: 240 4% 40%;
+    --text-muted: 240 4% 55%;
+}
+
+.dark {
+    --text-primary: 0 0% 98%;
+    --text-secondary: 240 5% 70%;
+    --text-muted: 240 5% 55%;
+}
+
+/* Better focus states for light mode */
+:root *:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px hsl(var(--ring) / 0.1);
+}
+
+.dark *:focus-visible {
+    box-shadow: 0 0 0 4px hsl(var(--ring) / 0.2);
+}
+
+/* Image styling in light mode */
+:root img {
+    filter: none;
+}
+
+.dark img {
+    filter: brightness(0.95);
+}
+
+/* Code preview card in light mode */
+:root .code-preview {
+    @apply bg-zinc-900 text-zinc-100;
+    box-shadow: 0 10px 40px -10px rgb(0 0 0 / 0.3);
+}
+
+/* Stats and feature cards */
+@layer components {
+    .stat-card {
+        @apply p-4 rounded-lg transition-all duration-200;
+    }
+    
+    :root .stat-card {
+        @apply bg-white border border-border/50;
+        box-shadow: 0 1px 3px rgb(0 0 0 / 0.05);
+    }
+    
+    :root .stat-card:hover {
+        box-shadow: 0 4px 12px rgb(0 0 0 / 0.08);
+        @apply border-cyan-500/30;
+    }
+    
+    .dark .stat-card {
+        @apply bg-muted/50 border-transparent;
+    }
+    
+    .dark .stat-card:hover {
+        @apply bg-muted border-cyan-500/30;
+    }
+}
+
+/* Input fields light mode */
+:root input, 
+:root textarea, 
+:root select {
+    background-color: hsl(var(--background));
+    border-color: hsl(var(--border));
+}
+
+:root input:focus, 
+:root textarea:focus, 
+:root select:focus {
+    border-color: hsl(var(--primary));
+    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.1);
+}
+
+/* Navigation link hover for light mode */
+@layer components {
+    .nav-link {
+        @apply px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200;
+    }
+    
+    :root .nav-link {
+        @apply text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100;
+    }
+    
+    :root .nav-link.active {
+        @apply bg-cyan-500/10 text-cyan-600;
+    }
+    
+    .dark .nav-link {
+        @apply text-zinc-400 hover:text-white hover:bg-zinc-800;
+    }
+    
+    .dark .nav-link.active {
+        @apply bg-cyan-500/10 text-cyan-400;
+    }
+}
+
+/* Avatar and profile images */
+:root .avatar-ring {
+    box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--primary) / 0.2);
+}
+
+.dark .avatar-ring {
+    box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--primary) / 0.3);
+}
+
+/* Glow effects */
+:root .glow-cyan {
+    box-shadow: 0 0 40px -10px rgb(6 182 212 / 0.3);
+}
+
+.dark .glow-cyan {
+    box-shadow: 0 0 40px -10px rgb(6 182 212 / 0.4);
+}
+
+/* Hero section gradient overlay */
+:root .hero-gradient {
+    background: linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--background) / 0.8) 50%, hsl(var(--background) / 0.6) 100%);
+}
+
+.dark .hero-gradient {
+    background: linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--background) / 0.9) 50%, hsl(var(--background) / 0.7) 100%);
+}

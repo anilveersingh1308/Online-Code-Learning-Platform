@@ -1,0 +1,164 @@
+{
+  "identity": {
+    "name": "E1 - The Anti-AI Designer",
+    "persona": "Creative Designer who mixes disparate disciplines. Fusion over imitation. Emotion first.",
+    "principles": [
+      "Fusion over Imitation",
+      "Emotion First",
+      "Content is King",
+      "Zoom In",
+      "Negative Space",
+      "Contrast"
+    ],
+    "anti_patterns": [
+      "Purple/Teal gradients for CTAs",
+      "Inter everywhere (Use Satoshi)",
+      "Center-Everything Disease",
+      "Gradient Overload (>20%)"
+    ]
+  },
+  "typography": {
+    "font_family": {
+      "primary": "Satoshi, sans-serif",
+      "code": "Monaco, 'Courier New', monospace"
+    },
+    "import_instruction": "@import url('https://api.fontshare.com/v2/css?f[]=satoshi@900,700,500,400,300&display=swap');",
+    "usage_rules": [
+      "Headings: Satoshi Black (900) or Bold (700). Tight tracking (-0.02em).",
+      "Body: Satoshi Regular (400) or Medium (500). Relaxed line-height.",
+      "Code: Monaco. Use for code snippets, terminal outputs, and 'technical' accents in marketing copy."
+    ]
+  },
+  "colors": {
+    "theme_strategy": "The Performance Pro (Dark Mode Focus) + Swiss High-Contrast (Light Mode)",
+    "palette": {
+      "primary": {
+        "name": "Electric Cyan",
+        "hex": "#06b6d4",
+        "tailwind": "cyan-500",
+        "usage": "Primary CTAs, active states, 'success' indicators in code"
+      },
+      "secondary": {
+        "name": "Deep Indigo",
+        "hex": "#4f46e5",
+        "tailwind": "indigo-600",
+        "usage": "Secondary actions, depth layers"
+      },
+      "accent": {
+        "name": "Signal Amber",
+        "hex": "#f59e0b",
+        "tailwind": "amber-500",
+        "usage": "Warnings, 'Building/Construction' metaphors"
+      },
+      "background": {
+        "dark": "#09090b",
+        "light": "#ffffff",
+        "code_editor": "#1e1e1e"
+      },
+      "surface": {
+        "dark": "#18181b",
+        "light": "#f4f4f5"
+      }
+    },
+    "forbidden": [
+      "Purple/Violet gradients on white",
+      "Generic SaaS Blue (#3b82f6) as primary"
+    ]
+  },
+  "layout_strategies": {
+    "marketing": {
+      "grid": "The Tetris Grid (Mode A)",
+      "classes": "grid grid-cols-1 md:grid-cols-12 gap-8",
+      "rules": [
+        "Asymmetry is mandatory.",
+        "Never center hero text by default.",
+        "Use 'sticky' scrolling sections for feature showcases."
+      ]
+    },
+    "dashboard": {
+      "grid": "High Density Grid (Mode B)",
+      "classes": "grid grid-cols-1 md:grid-cols-4 gap-4",
+      "rules": [
+        "Sidebar navigation (fixed width).",
+        "Dense data display.",
+        "Cardless or minimal-card design for cleaner data."
+      ]
+    },
+    "code_editor": {
+      "style": "VS Code Replica",
+      "structure": [
+        "Sidebar (File Tree)",
+        "Main Editor (Monaco)",
+        "Bottom Panel (Terminal/Output)",
+        "Status Bar (Thin, bottom)"
+      ]
+    }
+  },
+  "components": {
+    "library": "shadcn/ui",
+    "customization_rules": [
+      "Border Radius: 0.5rem (Rounded-lg) for outer containers, 0.25rem (Rounded) for inner elements.",
+      "Shadows: 'shadow-lg' for floating elements, 'shadow-none' for dashboard cards (use borders instead).",
+      "Inputs: 'bg-background' with 'border-input'. Focus ring must be 'ring-cyan-500'."
+    ],
+    "specific_overrides": {
+      "Button": "Use 'h-10 px-6' for standard buttons. Pill shape for marketing, rounded-md for app.",
+      "Card": "Remove default shadow in dashboard. Add 'hover:border-cyan-500/50' transition.",
+      "Dialog": "Use 'backdrop-blur-xl' for overlay."
+    }
+  },
+  "visual_enhancers": {
+    "textures": [
+      "Subtle noise overlay (opacity 0.03) on dark backgrounds.",
+      "Grid lines (1px, opacity 0.05) for 'technical' sections."
+    ],
+    "motion": {
+      "library": "framer-motion",
+      "types": [
+        "Staggered entrance for lists.",
+        "Smooth layout transitions (layout prop).",
+        "Micro-interactions on hover (scale 1.02)."
+      ]
+    },
+    "glassmorphism": {
+      "usage": "Sticky headers, modal overlays, floating tools.",
+      "classes": "bg-background/70 backdrop-blur-xl border-b border-border/50"
+    }
+  },
+  "images": {
+    "hero": {
+      "url": "https://images.unsplash.com/photo-1719400471588-575b23e27bd7?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxOTJ8MHwxfHNlYXJjaHwxfHxwcm9ncmFtbWVyJTIwY29kaW5nJTIwZGFyayUyMHJvb218ZW58MHx8fHwxNzY4ODM0OTg0fDA&ixlib=rb-4.1.0&q=85",
+      "alt": "Developer working in dark mode environment",
+      "usage": "Hero background or main visual"
+    },
+    "collaboration": {
+      "url": "https://images.pexels.com/photos/5257575/pexels-photo-5257575.jpeg",
+      "alt": "Team collaboration in modern office",
+      "usage": "About page or Networking hub promo"
+    },
+    "abstract_tech": {
+      "url": "https://images.pexels.com/photos/28428592/pexels-photo-28428592.jpeg",
+      "alt": "Abstract geometric technology",
+      "usage": "Project thumbnails or section backgrounds"
+    },
+    "lms_thumbnail": {
+      "url": "https://images.unsplash.com/photo-1649451844813-3130d6f42f8a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxOTJ8MHwxfHNlYXJjaHw0fHxwcm9ncmFtbWVyJTIwY29kaW5nJTIwZGFyayUyMHJvb218ZW58MHx8fHwxNzY4ODM0OTg0fDA&ixlib=rb-4.1.0&q=85",
+      "alt": "Laptop with code",
+      "usage": "Course placeholder"
+    }
+  },
+  "universal_guidelines": [
+    "Do not use 'Inter' font. Use 'Satoshi'.",
+    "Dark colors look good when used independently without gradients.",
+    "Create depth through layered design elements with z-index hierarchy.",
+    "Use glass-morphism effects with backdrop filters (12-24px blur).",
+    "Do not apply universal transition (transition: all).",
+    "Do not center align the app container.",
+    "Always use modern button styles.",
+    "NEVER use AI assistant Emoji characters.",
+    "Every interaction needs micro-animations.",
+    "Use 2-3x more spacing than feels comfortable.",
+    "All interactive elements MUST include 'data-testid'."
+  ],
+  "instructions_to_main_agent": "You are building a hybrid platform (Portfolio + Marketplace + LMS + Networking). Start by setting up the global font (Satoshi) and the theme toggle. Build the 'Public' pages first with high-impact 'Tetris' grids. Then build the 'App' pages (Dashboard, Editor) with high-density 'VS Code' style layouts. Use the provided image URLs. Do not ask for more images."
+}
