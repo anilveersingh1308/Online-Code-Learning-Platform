@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '../components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
+import NotificationDropdown from './NotificationDropdown';
 import { Sun, Moon, Menu, X, Code2, GraduationCap, User, LogOut, Settings, LayoutDashboard } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -83,7 +84,11 @@ const Navbar = () => {
 
             {/* Auth Section */}
             {isAuthenticated && user ? (
-              <DropdownMenu>
+              <>
+                {/* Notifications */}
+                <NotificationDropdown />
+                
+                <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-10 w-10 rounded-full" data-testid="user-menu-trigger">
                     <Avatar className="h-10 w-10">
@@ -129,6 +134,7 @@ const Navbar = () => {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+              </>
             ) : (
               <div className="hidden sm:flex items-center gap-2">
                 <Link to="/signin">

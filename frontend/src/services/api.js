@@ -64,13 +64,74 @@ export const blogApi = {
   create: (data) => axios.post(`${API}/blog`, data)
 };
 
+// Support API
+export const supportApi = {
+  submitTicket: (data) => axios.post(`${API}/support/tickets`, data),
+  getTickets: (params = {}) => axios.get(`${API}/support/tickets`, { params }),
+  getTicket: (id) => axios.get(`${API}/support/tickets/${id}`),
+  closeTicket: (id) => axios.put(`${API}/support/tickets/${id}/close`)
+};
+
+// Documentation API
+export const docApi = {
+  // Categories
+  getCategories: () => axios.get(`${API}/docs/categories`),
+  getCategory: (slug) => axios.get(`${API}/docs/categories/${slug}`),
+  
+  // Articles
+  getArticles: (params = {}) => axios.get(`${API}/docs/articles`, { params }),
+  getArticle: (slug) => axios.get(`${API}/docs/articles/${slug}`),
+  getFeaturedArticles: () => axios.get(`${API}/docs/featured`),
+  getPopularArticles: () => axios.get(`${API}/docs/popular`),
+  getRecentArticles: () => axios.get(`${API}/docs/recent`),
+  
+  // Search
+  search: (query, filters = {}) => axios.get(`${API}/docs/search`, { 
+    params: { q: query, ...filters } 
+  }),
+  
+  // User Progress
+  getProgress: (articleId) => axios.get(`${API}/docs/progress/${articleId}`),
+  updateProgress: (articleId, data) => axios.post(`${API}/docs/progress/${articleId}`, data),
+  getBookmarks: () => axios.get(`${API}/docs/bookmarks`),
+  toggleBookmark: (articleId) => axios.post(`${API}/docs/bookmark/${articleId}`),
+  getUserProgress: () => axios.get(`${API}/docs/user-progress`),
+  
+  // Article Feedback
+  submitFeedback: (articleId, helpful) => axios.post(`${API}/docs/articles/${articleId}/feedback`, { helpful }),
+  
+  // Comments
+  getComments: (articleId) => axios.get(`${API}/docs/articles/${articleId}/comments`),
+  addComment: (articleId, content, parentId = null) => 
+    axios.post(`${API}/docs/articles/${articleId}/comments`, { content, parent_id: parentId }),
+  
+  // External Resources
+  getResources: (params = {}) => axios.get(`${API}/docs/resources`, { params }),
+  
+  // Learning Paths
+  getPaths: () => axios.get(`${API}/docs/paths`),
+  getPath: (slug) => axios.get(`${API}/docs/paths/${slug}`),
+  enrollPath: (pathId) => axios.post(`${API}/docs/paths/${pathId}/enroll`),
+  getPathProgress: (pathId) => axios.get(`${API}/docs/paths/${pathId}/progress`),
+  updatePathProgress: (pathId, data) => axios.post(`${API}/docs/paths/${pathId}/progress`, data),
+  getUserPaths: () => axios.get(`${API}/docs/user-paths`)
+};
+
 // Admin API
 export const adminApi = {
   getStats: () => axios.get(`${API}/admin/stats`),
   getUsers: () => axios.get(`${API}/admin/users`),
   updateUserRole: (userId, role) => axios.put(`${API}/admin/users/${userId}/role`, { role }),
   getContacts: () => axios.get(`${API}/admin/contacts`),
-  getTransactions: () => axios.get(`${API}/admin/transactions`)
+  getTransactions: () => axios.get(`${API}/admin/transactions`),
+  getSupportTickets: (params = {}) => axios.get(`${API}/admin/support/tickets`, { params }),
+  respondToTicket: (id, response, status) => axios.put(`${API}/admin/support/tickets/${id}/respond`, { response, status })
 };
 
-export default API;
+// Create axios instance for direct usage
+const api = axios.create({
+  baseURL: API,
+  withCredentials: true
+});
+
+export default api;

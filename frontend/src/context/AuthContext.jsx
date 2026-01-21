@@ -131,22 +131,6 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  const processSession = useCallback(async (sessionId) => {
-    try {
-      const response = await axios.post(
-        `${API}/auth/session`,
-        { session_id: sessionId },
-        { withCredentials: true }
-      );
-      setUser(response.data.user);
-      setIsAuthenticated(true);
-      return response.data.user;
-    } catch (error) {
-      console.error('Session processing error:', error);
-      throw error;
-    }
-  }, []);
-
   const updateProfile = useCallback(async (data) => {
     const response = await axios.put(`${API}/auth/profile`, data, {
       withCredentials: true
@@ -166,10 +150,9 @@ export const AuthProvider = ({ children }) => {
     register,
     handleOAuthCallback,
     logout,
-    processSession,
     updateProfile,
     checkAuth
-  }), [user, loading, isAuthenticated, login, loginWithGoogle, loginWithGithub, loginWithEmail, register, handleOAuthCallback, logout, processSession, updateProfile, checkAuth]);
+  }), [user, loading, isAuthenticated, login, loginWithGoogle, loginWithGithub, loginWithEmail, register, handleOAuthCallback, logout, updateProfile, checkAuth]);
 
   return (
     <AuthContext.Provider value={value}>

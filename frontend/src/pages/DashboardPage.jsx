@@ -4,10 +4,11 @@ import { motion } from 'framer-motion';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { useAuth } from '../context/AuthContext';
+import NotificationDropdown from '../components/NotificationDropdown';
 import { 
   Code2, BookOpen, ShoppingBag, Settings, LogOut, User,
   TrendingUp, Award, Clock, ChevronRight, Loader2,
-  FolderOpen, GraduationCap, Bell, Heart
+  FolderOpen, GraduationCap, Heart
 } from 'lucide-react';
 
 const DashboardPage = () => {
@@ -68,12 +69,7 @@ const DashboardPage = () => {
             </Link>
             
             <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="w-5 h-5" />
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-                  1
-                </span>
-              </Button>
+              <NotificationDropdown />
               
               <div className="flex items-center gap-3">
                 {user.picture ? (

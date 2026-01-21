@@ -22,6 +22,19 @@ import ContactPage from "./pages/ContactPage";
 import SignInPage from "./pages/SignInPage";
 import SignUpPage from "./pages/SignUpPage";
 import DashboardPage from "./pages/DashboardPage";
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
+import TermsOfServicePage from "./pages/TermsOfServicePage";
+import FAQPage from "./pages/FAQPage";
+import SupportPage from "./pages/SupportPage";
+
+// Documentation Pages
+import DocumentationPage from "./pages/DocumentationPage";
+import DocArticlePage from "./pages/DocArticlePage";
+import DocArticlesListPage from "./pages/DocArticlesListPage";
+import DocCategoryPage from "./pages/DocCategoryPage";
+import ExternalResourcesPage from "./pages/ExternalResourcesPage";
+import LearningPathsPage from "./pages/LearningPathsPage";
+import ArticleAdminPage from "./pages/ArticleAdminPage";
 
 // Layout wrapper with Navbar and Footer
 const Layout = ({ children }) => {
@@ -66,6 +79,20 @@ function App() {
               <Route path="/courses" element={<Layout><CoursesPage /></Layout>} />
               <Route path="/blog" element={<Layout><BlogPage /></Layout>} />
               <Route path="/contact" element={<Layout><ContactPage /></Layout>} />
+              <Route path="/privacy" element={<Layout><PrivacyPolicyPage /></Layout>} />
+              <Route path="/terms" element={<Layout><TermsOfServicePage /></Layout>} />
+              <Route path="/faq" element={<Layout><FAQPage /></Layout>} />
+              <Route path="/support" element={<Layout><SupportPage /></Layout>} />
+              
+              {/* Documentation Routes */}
+              <Route path="/docs" element={<Layout><DocumentationPage /></Layout>} />
+              <Route path="/docs/articles" element={<Layout><DocArticlesListPage /></Layout>} />
+              <Route path="/docs/article/:slug" element={<Layout><DocArticlePage /></Layout>} />
+              <Route path="/docs/category/:categorySlug" element={<Layout><DocCategoryPage /></Layout>} />
+              <Route path="/docs/resources" element={<Layout><ExternalResourcesPage /></Layout>} />
+              <Route path="/docs/paths" element={<Layout><LearningPathsPage /></Layout>} />
+              <Route path="/docs/paths/:slug" element={<Layout><LearningPathsPage /></Layout>} />
+              <Route path="/docs/admin" element={<Layout><ArticleAdminPage /></Layout>} />
             </Routes>
             <Toaster 
               position="bottom-right" 

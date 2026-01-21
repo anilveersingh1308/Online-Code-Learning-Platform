@@ -228,6 +228,140 @@ class BlogPost(BaseModel):
     is_published: bool = True
     views: int = 0
 
+class SupportTicket(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    ticket_id: str = Field(default_factory=lambda: f"ticket_{uuid.uuid4().hex[:12]}")
+    user_id: Optional[str] = None  # Optional for guest submissions
+    name: str
+    email: str
+    subject: str
+    category: str  # technical, billing, account, feature, bug, other
+    priority: str = "medium"  # low, medium, high, urgent
+    description: str
+    attachments: List[str] = []
+    status: str = "open"  # open, in_progress, resolved, closed
+    assigned_to: Optional[str] = None
+    response: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    resolved_at: Optional[datetime] = None
+
+class SupportTicketCreate(BaseModel):
+    name: str
+    email: EmailStr
+    subject: str
+    category: str
+    priority: str = "medium"
+    description: str
+
+# ========================
+# Documentation Models
+# ========================
+
+class DocCategory(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    category_id: str = Field(default_factory=lambda: f"doccat_{uuid.uuid4().hex[:12]}")
+    name: str
+    slug: str
+    parent_id: Optional[str] = None
+    icon: str = "BookOpen"
+    description: str
+    order: int = 0
+    color: str = "#06b6d4"  # Cyan default
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class DocArticle(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    article_id: str = Field(default_factory=lambda: f"doc_{uuid.uuid4().hex[:12]}")
+    category_id: str
+    title: str
+    slug: str
+    content: str  # Markdown content
+    excerpt: str
+    author_id: Optional[str] = None
+    difficulty_level: str = "beginner"  # beginner, intermediate, advanced
+    estimated_reading_time: int = 5  # minutes
+    tags: List[str] = []
+    prerequisites: List[str] = []
+    related_articles: List[str] = []
+    code_examples: List[dict] = []
+    external_links: List[dict] = []
+    view_count: int = 0
+    helpful_count: int = 0
+    not_helpful_count: int = 0
+    is_published: bool = True
+    is_featured: bool = False
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class ExternalResource(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    resource_id: str = Field(default_factory=lambda: f"extres_{uuid.uuid4().hex[:12]}")
+    platform_name: str
+    description: str
+    url: str
+    logo_url: Optional[str] = None
+    pricing_model: str = "free"  # free, freemium, paid, student_discount
+    category: str
+    subcategory: Optional[str] = None
+    topics: List[str] = []
+    best_for: List[str] = []  # beginner, intermediate, advanced
+    rating: float = 0.0
+    review_count: int = 0
+    is_featured: bool = False
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class LearningPath(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    path_id: str = Field(default_factory=lambda: f"path_{uuid.uuid4().hex[:12]}")
+    title: str
+    slug: str
+    description: str
+    difficulty_level: str = "beginner"
+    estimated_duration: str = "8 weeks"
+    topics: List[str] = []
+    steps: List[dict] = []  # {order, title, description, articles, resources, duration}
+    prerequisites: List[str] = []
+    outcomes: List[str] = []
+    enrolled_count: int = 0
+    completion_rate: float = 0.0
+    is_featured: bool = False
+    is_published: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class UserDocProgress(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    progress_id: str = Field(default_factory=lambda: f"prog_{uuid.uuid4().hex[:12]}")
+    user_id: str
+    article_id: str
+    progress_percentage: float = 0.0
+    is_completed: bool = False
+    is_bookmarked: bool = False
+    notes: Optional[str] = None
+    last_read_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    completed_at: Optional[datetime] = None
+
+class UserPathProgress(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    progress_id: str = Field(default_factory=lambda: f"pathprog_{uuid.uuid4().hex[:12]}")
+    user_id: str
+    path_id: str
+    current_step: int = 0
+    completed_steps: List[int] = []
+    progress_percentage: float = 0.0
+    started_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    completed_at: Optional[datetime] = None
+
+class DocComment(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    comment_id: str = Field(default_factory=lambda: f"doccom_{uuid.uuid4().hex[:12]}")
+    article_id: str
+    user_id: str
+    content: str
+    parent_id: Optional[str] = None
+    is_approved: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
 # ========================
 # Auth Helper
 # ========================
@@ -699,47 +833,6 @@ async def login(request: LoginRequest, response: Response):
     
     return {"user": user_data, "session_token": session_token}
 
-# Keep the old session endpoint for backwards compatibility
-@api_router.post("/auth/session")
-async def create_session(request: Request, response: Response):
-    """Exchange session_id from Emergent Auth for session_token (deprecated - kept for compatibility)"""
-    body = await request.json()
-    session_id = body.get("session_id")
-    
-    if not session_id:
-        raise HTTPException(status_code=400, detail="session_id required")
-    
-    # Call Emergent Auth API
-    async with httpx.AsyncClient() as http_client:
-        try:
-            auth_response = await http_client.get(
-                "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data",
-                headers={"X-Session-ID": session_id}
-            )
-            if auth_response.status_code != 200:
-                raise HTTPException(status_code=401, detail="Invalid session_id")
-            
-            auth_data = auth_response.json()
-        except Exception as e:
-            logger.error(f"Auth error: {e}")
-            raise HTTPException(status_code=500, detail="Authentication service error")
-    
-    # Get or create user
-    user_id = await get_or_create_user(
-        email=auth_data["email"],
-        name=auth_data["name"],
-        picture=auth_data.get("picture"),
-        provider="emergent"
-    )
-    
-    # Create session
-    session_token = await create_user_session(user_id, response)
-    
-    # Get updated user
-    user_doc = await db.users.find_one({"user_id": user_id}, {"_id": 0})
-    
-    return {"user": user_doc, "session_token": session_token}
-
 @api_router.get("/auth/me")
 async def get_me(request: Request):
     """Get current user"""
@@ -784,6 +877,678 @@ async def update_profile(request: Request, user: User = Depends(require_auth)):
     
     user_doc = await db.users.find_one({"user_id": user.user_id}, {"_id": 0})
     return user_doc
+
+# ========================
+# Notifications Routes
+# ========================
+
+@api_router.get("/notifications")
+async def get_notifications(
+    user: User = Depends(require_auth),
+    limit: int = 20,
+    offset: int = 0,
+    unread_only: bool = False
+):
+    """Get user notifications"""
+    query = {"user_id": user.user_id}
+    if unread_only:
+        query["is_read"] = False
+    
+    notifications = await db.notifications.find(
+        query,
+        {"_id": 0}
+    ).sort("created_at", -1).skip(offset).limit(limit).to_list(length=limit)
+    
+    # Get total count
+    total = await db.notifications.count_documents({"user_id": user.user_id})
+    unread_count = await db.notifications.count_documents({"user_id": user.user_id, "is_read": False})
+    
+    return {
+        "notifications": notifications,
+        "total": total,
+        "unread_count": unread_count
+    }
+
+@api_router.get("/notifications/unread-count")
+async def get_unread_count(user: User = Depends(require_auth)):
+    """Get count of unread notifications"""
+    count = await db.notifications.count_documents({"user_id": user.user_id, "is_read": False})
+    return {"unread_count": count}
+
+@api_router.put("/notifications/{notification_id}/read")
+async def mark_notification_read(notification_id: str, user: User = Depends(require_auth)):
+    """Mark a notification as read"""
+    result = await db.notifications.update_one(
+        {"notification_id": notification_id, "user_id": user.user_id},
+        {"$set": {"is_read": True}}
+    )
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Notification not found")
+    return {"message": "Notification marked as read"}
+
+@api_router.put("/notifications/read-all")
+async def mark_all_notifications_read(user: User = Depends(require_auth)):
+    """Mark all notifications as read"""
+    await db.notifications.update_many(
+        {"user_id": user.user_id, "is_read": False},
+        {"$set": {"is_read": True}}
+    )
+    return {"message": "All notifications marked as read"}
+
+@api_router.delete("/notifications/{notification_id}")
+async def delete_notification(notification_id: str, user: User = Depends(require_auth)):
+    """Delete a notification"""
+    result = await db.notifications.delete_one(
+        {"notification_id": notification_id, "user_id": user.user_id}
+    )
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Notification not found")
+    return {"message": "Notification deleted"}
+
+@api_router.delete("/notifications")
+async def clear_all_notifications(user: User = Depends(require_auth)):
+    """Clear all notifications for user"""
+    await db.notifications.delete_many({"user_id": user.user_id})
+    return {"message": "All notifications cleared"}
+
+# ========================
+# Support Tickets Routes
+# ========================
+
+@api_router.post("/support/tickets")
+async def create_support_ticket(
+    ticket_data: SupportTicketCreate,
+    request: Request
+):
+    """Create a new support ticket (works for both authenticated and guest users)"""
+    user = await get_current_user(request)
+    
+    ticket = SupportTicket(
+        user_id=user.user_id if user else None,
+        name=ticket_data.name,
+        email=ticket_data.email,
+        subject=ticket_data.subject,
+        category=ticket_data.category,
+        priority=ticket_data.priority,
+        description=ticket_data.description
+    )
+    
+    ticket_dict = ticket.model_dump()
+    ticket_dict["created_at"] = ticket_dict["created_at"].isoformat()
+    ticket_dict["updated_at"] = ticket_dict["updated_at"].isoformat()
+    
+    await db.support_tickets.insert_one(ticket_dict)
+    
+    logger.info(f"Support ticket created: {ticket.ticket_id} for {ticket_data.email}")
+    
+    return {
+        "message": "Support ticket created successfully",
+        "ticket_id": ticket.ticket_id,
+        "status": "open"
+    }
+
+@api_router.get("/support/tickets")
+async def get_user_tickets(
+    user: User = Depends(require_auth),
+    status: Optional[str] = None
+):
+    """Get all support tickets for authenticated user"""
+    query = {"user_id": user.user_id}
+    if status:
+        query["status"] = status
+    
+    tickets = await db.support_tickets.find(
+        query,
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(length=100)
+    
+    return {"tickets": tickets}
+
+@api_router.get("/support/tickets/{ticket_id}")
+async def get_ticket_details(
+    ticket_id: str,
+    user: User = Depends(require_auth)
+):
+    """Get details of a specific support ticket"""
+    ticket = await db.support_tickets.find_one(
+        {"ticket_id": ticket_id, "user_id": user.user_id},
+        {"_id": 0}
+    )
+    
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    
+    return ticket
+
+@api_router.put("/support/tickets/{ticket_id}/close")
+async def close_ticket(
+    ticket_id: str,
+    user: User = Depends(require_auth)
+):
+    """Close a support ticket"""
+    result = await db.support_tickets.update_one(
+        {"ticket_id": ticket_id, "user_id": user.user_id},
+        {
+            "$set": {
+                "status": "closed",
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    
+    return {"message": "Ticket closed successfully"}
+
+# Admin endpoints for support tickets
+@api_router.get("/admin/support/tickets")
+async def get_all_tickets(
+    admin: User = Depends(require_admin),
+    status: Optional[str] = None,
+    category: Optional[str] = None,
+    priority: Optional[str] = None,
+    limit: int = 50,
+    offset: int = 0
+):
+    """Admin: Get all support tickets"""
+    query = {}
+    if status:
+        query["status"] = status
+    if category:
+        query["category"] = category
+    if priority:
+        query["priority"] = priority
+    
+    tickets = await db.support_tickets.find(
+        query,
+        {"_id": 0}
+    ).sort("created_at", -1).skip(offset).limit(limit).to_list(length=limit)
+    
+    total = await db.support_tickets.count_documents(query)
+    
+    return {"tickets": tickets, "total": total}
+
+@api_router.put("/admin/support/tickets/{ticket_id}/respond")
+async def respond_to_ticket(
+    ticket_id: str,
+    response: str,
+    status: str = "in_progress",
+    admin: User = Depends(require_admin)
+):
+    """Admin: Respond to a support ticket"""
+    update_data = {
+        "response": response,
+        "status": status,
+        "assigned_to": admin.user_id,
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    if status == "resolved":
+        update_data["resolved_at"] = datetime.now(timezone.utc).isoformat()
+    
+    result = await db.support_tickets.update_one(
+        {"ticket_id": ticket_id},
+        {"$set": update_data}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    
+    return {"message": "Response sent successfully"}
+
+# ========================
+# Documentation Routes
+# ========================
+
+@api_router.get("/docs/categories")
+async def get_doc_categories():
+    """Get all documentation categories"""
+    categories = await db.doc_categories.find(
+        {},
+        {"_id": 0}
+    ).sort("order", 1).to_list(length=100)
+    return {"categories": categories}
+
+@api_router.get("/docs/categories/{slug}")
+async def get_doc_category(slug: str):
+    """Get a specific category with its articles"""
+    category = await db.doc_categories.find_one({"slug": slug}, {"_id": 0})
+    if not category:
+        raise HTTPException(status_code=404, detail="Category not found")
+    
+    articles = await db.doc_articles.find(
+        {"category_id": category["category_id"], "is_published": True},
+        {"_id": 0, "content": 0}
+    ).sort("created_at", -1).to_list(length=100)
+    
+    subcategories = await db.doc_categories.find(
+        {"parent_id": category["category_id"]},
+        {"_id": 0}
+    ).sort("order", 1).to_list(length=50)
+    
+    return {"category": category, "articles": articles, "subcategories": subcategories}
+
+@api_router.get("/docs/articles")
+async def get_doc_articles(
+    category_id: Optional[str] = None,
+    difficulty: Optional[str] = None,
+    tag: Optional[str] = None,
+    search: Optional[str] = None,
+    featured: Optional[bool] = None,
+    limit: int = 20,
+    offset: int = 0
+):
+    """Get documentation articles with filters"""
+    query = {"is_published": True}
+    
+    if category_id:
+        query["category_id"] = category_id
+    if difficulty:
+        query["difficulty_level"] = difficulty
+    if tag:
+        query["tags"] = {"$in": [tag]}
+    if featured:
+        query["is_featured"] = True
+    if search:
+        query["$or"] = [
+            {"title": {"$regex": search, "$options": "i"}},
+            {"excerpt": {"$regex": search, "$options": "i"}},
+            {"tags": {"$in": [search]}}
+        ]
+    
+    articles = await db.doc_articles.find(
+        query,
+        {"_id": 0, "content": 0}
+    ).sort("created_at", -1).skip(offset).limit(limit).to_list(length=limit)
+    
+    total = await db.doc_articles.count_documents(query)
+    
+    return {"articles": articles, "total": total}
+
+@api_router.get("/docs/articles/{slug}")
+async def get_doc_article(slug: str, request: Request):
+    """Get a specific article by slug"""
+    article = await db.doc_articles.find_one({"slug": slug, "is_published": True}, {"_id": 0})
+    if not article:
+        raise HTTPException(status_code=404, detail="Article not found")
+    
+    # Increment view count
+    await db.doc_articles.update_one(
+        {"slug": slug},
+        {"$inc": {"view_count": 1}}
+    )
+    
+    # Get category info
+    category = await db.doc_categories.find_one(
+        {"category_id": article["category_id"]},
+        {"_id": 0}
+    )
+    
+    # Get related articles
+    related = []
+    if article.get("related_articles"):
+        related = await db.doc_articles.find(
+            {"article_id": {"$in": article["related_articles"]}, "is_published": True},
+            {"_id": 0, "content": 0}
+        ).to_list(length=5)
+    
+    # Get user progress if authenticated
+    user = await get_current_user(request)
+    progress = None
+    if user:
+        progress = await db.user_doc_progress.find_one(
+            {"user_id": user.user_id, "article_id": article["article_id"]},
+            {"_id": 0}
+        )
+    
+    return {"article": article, "category": category, "related": related, "user_progress": progress}
+
+@api_router.get("/docs/search")
+async def search_docs(q: str, limit: int = 20):
+    """Search documentation articles"""
+    if not q or len(q) < 2:
+        return {"results": [], "total": 0}
+    
+    query = {
+        "is_published": True,
+        "$or": [
+            {"title": {"$regex": q, "$options": "i"}},
+            {"excerpt": {"$regex": q, "$options": "i"}},
+            {"content": {"$regex": q, "$options": "i"}},
+            {"tags": {"$in": [q]}}
+        ]
+    }
+    
+    articles = await db.doc_articles.find(
+        query,
+        {"_id": 0, "article_id": 1, "title": 1, "slug": 1, "excerpt": 1, "category_id": 1, "difficulty_level": 1}
+    ).limit(limit).to_list(length=limit)
+    
+    return {"results": articles, "total": len(articles)}
+
+@api_router.get("/docs/featured")
+async def get_featured_docs():
+    """Get featured documentation articles"""
+    articles = await db.doc_articles.find(
+        {"is_published": True, "is_featured": True},
+        {"_id": 0, "content": 0}
+    ).sort("view_count", -1).limit(6).to_list(length=6)
+    
+    return {"articles": articles}
+
+@api_router.get("/docs/popular")
+async def get_popular_docs():
+    """Get most popular documentation articles"""
+    articles = await db.doc_articles.find(
+        {"is_published": True},
+        {"_id": 0, "content": 0}
+    ).sort("view_count", -1).limit(10).to_list(length=10)
+    
+    return {"articles": articles}
+
+@api_router.get("/docs/recent")
+async def get_recent_docs():
+    """Get recently updated documentation articles"""
+    articles = await db.doc_articles.find(
+        {"is_published": True},
+        {"_id": 0, "content": 0}
+    ).sort("updated_at", -1).limit(10).to_list(length=10)
+    
+    return {"articles": articles}
+
+# User progress endpoints
+@api_router.post("/docs/progress/{article_id}")
+async def update_article_progress(
+    article_id: str,
+    progress: float = 0.0,
+    completed: bool = False,
+    user: User = Depends(require_auth)
+):
+    """Update user's reading progress on an article"""
+    progress_data = {
+        "user_id": user.user_id,
+        "article_id": article_id,
+        "progress_percentage": min(progress, 100.0),
+        "is_completed": completed,
+        "last_read_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    if completed:
+        progress_data["completed_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db.user_doc_progress.update_one(
+        {"user_id": user.user_id, "article_id": article_id},
+        {"$set": progress_data, "$setOnInsert": {"progress_id": f"prog_{uuid.uuid4().hex[:12]}"}},
+        upsert=True
+    )
+    
+    return {"message": "Progress updated"}
+
+@api_router.post("/docs/bookmark/{article_id}")
+async def toggle_bookmark(article_id: str, user: User = Depends(require_auth)):
+    """Toggle bookmark on an article"""
+    existing = await db.user_doc_progress.find_one(
+        {"user_id": user.user_id, "article_id": article_id}
+    )
+    
+    new_bookmark_state = not existing.get("is_bookmarked", False) if existing else True
+    
+    await db.user_doc_progress.update_one(
+        {"user_id": user.user_id, "article_id": article_id},
+        {
+            "$set": {"is_bookmarked": new_bookmark_state, "last_read_at": datetime.now(timezone.utc).isoformat()},
+            "$setOnInsert": {"progress_id": f"prog_{uuid.uuid4().hex[:12]}", "progress_percentage": 0.0, "is_completed": False}
+        },
+        upsert=True
+    )
+    
+    return {"bookmarked": new_bookmark_state}
+
+@api_router.get("/docs/bookmarks")
+async def get_bookmarks(user: User = Depends(require_auth)):
+    """Get user's bookmarked articles"""
+    progress_docs = await db.user_doc_progress.find(
+        {"user_id": user.user_id, "is_bookmarked": True},
+        {"_id": 0}
+    ).to_list(length=100)
+    
+    article_ids = [p["article_id"] for p in progress_docs]
+    articles = await db.doc_articles.find(
+        {"article_id": {"$in": article_ids}},
+        {"_id": 0, "content": 0}
+    ).to_list(length=100)
+    
+    return {"bookmarks": articles}
+
+@api_router.get("/docs/user-progress")
+async def get_user_doc_progress(user: User = Depends(require_auth)):
+    """Get user's overall documentation progress"""
+    # Get article progress
+    article_progress = await db.user_doc_progress.find(
+        {"user_id": user.user_id},
+        {"_id": 0}
+    ).to_list(length=500)
+    
+    completed_articles = [p for p in article_progress if p.get("is_completed")]
+    bookmarked_articles = [p for p in article_progress if p.get("is_bookmarked")]
+    
+    # Get learning path progress
+    path_progress = await db.user_path_progress.find(
+        {"user_id": user.user_id},
+        {"_id": 0}
+    ).to_list(length=50)
+    
+    # Get recently read articles
+    recent_progress = await db.user_doc_progress.find(
+        {"user_id": user.user_id},
+        {"_id": 0}
+    ).sort("last_read_at", -1).limit(5).to_list(length=5)
+    
+    recent_article_ids = [p["article_id"] for p in recent_progress]
+    recent_articles = []
+    if recent_article_ids:
+        recent_articles = await db.doc_articles.find(
+            {"article_id": {"$in": recent_article_ids}},
+            {"_id": 0, "content": 0}
+        ).to_list(length=5)
+    
+    return {
+        "total_articles_read": len(article_progress),
+        "completed_articles": len(completed_articles),
+        "bookmarked_count": len(bookmarked_articles),
+        "enrolled_paths": len(path_progress),
+        "path_progress": path_progress,
+        "recent_articles": recent_articles
+    }
+
+@api_router.get("/docs/user-paths")
+async def get_user_enrolled_paths(user: User = Depends(require_auth)):
+    """Get user's enrolled learning paths with progress"""
+    progress_docs = await db.user_path_progress.find(
+        {"user_id": user.user_id},
+        {"_id": 0}
+    ).to_list(length=50)
+    
+    path_ids = [p["path_id"] for p in progress_docs]
+    paths = await db.learning_paths.find(
+        {"path_id": {"$in": path_ids}},
+        {"_id": 0}
+    ).to_list(length=50)
+    
+    # Combine path data with progress
+    result = []
+    for path in paths:
+        progress = next((p for p in progress_docs if p["path_id"] == path["path_id"]), None)
+        result.append({
+            **path,
+            "user_progress": progress
+        })
+    
+    return {"enrolled_paths": result}
+
+@api_router.post("/docs/articles/{article_id}/feedback")
+async def submit_article_feedback(
+    article_id: str,
+    helpful: bool,
+    request: Request
+):
+    """Submit feedback on an article (helpful/not helpful)"""
+    field = "helpful_count" if helpful else "not_helpful_count"
+    await db.doc_articles.update_one(
+        {"article_id": article_id},
+        {"$inc": {field: 1}}
+    )
+    return {"message": "Feedback submitted"}
+
+# External Resources endpoints
+@api_router.get("/docs/resources")
+async def get_external_resources(
+    category: Optional[str] = None,
+    pricing: Optional[str] = None,
+    best_for: Optional[str] = None,
+    featured: Optional[bool] = None
+):
+    """Get external learning resources"""
+    query = {}
+    if category:
+        query["category"] = category
+    if pricing:
+        query["pricing_model"] = pricing
+    if best_for:
+        query["best_for"] = {"$in": [best_for]}
+    if featured:
+        query["is_featured"] = True
+    
+    resources = await db.external_resources.find(query, {"_id": 0}).to_list(length=200)
+    return {"resources": resources}
+
+@api_router.get("/docs/resources/categories")
+async def get_resource_categories():
+    """Get distinct resource categories"""
+    categories = await db.external_resources.distinct("category")
+    return {"categories": categories}
+
+# Learning Paths endpoints
+@api_router.get("/docs/paths")
+async def get_learning_paths(
+    difficulty: Optional[str] = None,
+    featured: Optional[bool] = None
+):
+    """Get all learning paths"""
+    query = {"is_published": True}
+    if difficulty:
+        query["difficulty_level"] = difficulty
+    if featured:
+        query["is_featured"] = True
+    
+    paths = await db.learning_paths.find(query, {"_id": 0}).sort("enrolled_count", -1).to_list(length=50)
+    return {"paths": paths}
+
+@api_router.get("/docs/paths/{slug}")
+async def get_learning_path(slug: str, request: Request):
+    """Get a specific learning path"""
+    path = await db.learning_paths.find_one({"slug": slug, "is_published": True}, {"_id": 0})
+    if not path:
+        raise HTTPException(status_code=404, detail="Learning path not found")
+    
+    # Get user progress if authenticated
+    user = await get_current_user(request)
+    progress = None
+    if user:
+        progress = await db.user_path_progress.find_one(
+            {"user_id": user.user_id, "path_id": path["path_id"]},
+            {"_id": 0}
+        )
+    
+    return {"path": path, "user_progress": progress}
+
+@api_router.post("/docs/paths/{path_id}/enroll")
+async def enroll_in_path(path_id: str, user: User = Depends(require_auth)):
+    """Enroll in a learning path"""
+    existing = await db.user_path_progress.find_one(
+        {"user_id": user.user_id, "path_id": path_id}
+    )
+    
+    if existing:
+        return {"message": "Already enrolled", "progress": existing}
+    
+    progress = UserPathProgress(user_id=user.user_id, path_id=path_id)
+    progress_dict = progress.model_dump()
+    progress_dict["started_at"] = progress_dict["started_at"].isoformat()
+    
+    await db.user_path_progress.insert_one(progress_dict)
+    await db.learning_paths.update_one({"path_id": path_id}, {"$inc": {"enrolled_count": 1}})
+    
+    return {"message": "Enrolled successfully"}
+
+@api_router.put("/docs/paths/{path_id}/progress")
+async def update_path_progress(
+    path_id: str,
+    step: int,
+    user: User = Depends(require_auth)
+):
+    """Update progress on a learning path"""
+    path = await db.learning_paths.find_one({"path_id": path_id}, {"_id": 0})
+    if not path:
+        raise HTTPException(status_code=404, detail="Learning path not found")
+    
+    total_steps = len(path.get("steps", []))
+    progress_percentage = (step / total_steps * 100) if total_steps > 0 else 0
+    
+    update_data = {
+        "current_step": step,
+        "progress_percentage": progress_percentage,
+        "$addToSet": {"completed_steps": step}
+    }
+    
+    if step >= total_steps:
+        update_data["completed_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db.user_path_progress.update_one(
+        {"user_id": user.user_id, "path_id": path_id},
+        {"$set": update_data}
+    )
+    
+    return {"message": "Progress updated", "progress_percentage": progress_percentage}
+
+# Comments on documentation
+@api_router.get("/docs/articles/{article_id}/comments")
+async def get_article_comments(article_id: str):
+    """Get comments on an article"""
+    comments = await db.doc_comments.find(
+        {"article_id": article_id, "is_approved": True},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(length=100)
+    
+    # Get user info for each comment
+    for comment in comments:
+        user = await db.users.find_one({"user_id": comment["user_id"]}, {"_id": 0, "name": 1, "picture": 1})
+        comment["user"] = user
+    
+    return {"comments": comments}
+
+@api_router.post("/docs/articles/{article_id}/comments")
+async def add_article_comment(
+    article_id: str,
+    content: str,
+    parent_id: Optional[str] = None,
+    user: User = Depends(require_auth)
+):
+    """Add a comment to an article"""
+    comment = DocComment(
+        article_id=article_id,
+        user_id=user.user_id,
+        content=content,
+        parent_id=parent_id
+    )
+    
+    comment_dict = comment.model_dump()
+    comment_dict["created_at"] = comment_dict["created_at"].isoformat()
+    
+    await db.doc_comments.insert_one(comment_dict)
+    
+    return {"message": "Comment added", "comment_id": comment.comment_id}
 
 # ========================
 # Projects Routes
@@ -1596,6 +2361,1165 @@ async def get_transactions(user: User = Depends(require_admin)):
     return transactions
 
 # ========================
+# Database Seeding
+# ========================
+
+@api_router.post("/seed/documentation")
+async def seed_documentation():
+    """Seed the database with sample documentation data"""
+    
+    # Check if already seeded
+    existing = await db.doc_categories.count_documents({})
+    if existing > 0:
+        return {"message": "Documentation already seeded", "categories": existing}
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # Seed Categories
+    categories = [
+        {
+            "category_id": "cat_prog_lang",
+            "name": "Programming Languages",
+            "slug": "programming-languages",
+            "parent_id": None,
+            "icon": "Code2",
+            "description": "Master Python, JavaScript, Java, C++, and more with comprehensive guides",
+            "order": 1,
+            "color": "#3b82f6",
+            "created_at": now
+        },
+        {
+            "category_id": "cat_web_dev",
+            "name": "Web Development",
+            "slug": "web-development",
+            "parent_id": None,
+            "icon": "Globe",
+            "description": "Full-stack web development from HTML basics to advanced frameworks",
+            "order": 2,
+            "color": "#22c55e",
+            "created_at": now
+        },
+        {
+            "category_id": "cat_mobile",
+            "name": "Mobile Development",
+            "slug": "mobile-development",
+            "parent_id": None,
+            "icon": "Smartphone",
+            "description": "Build iOS, Android, and cross-platform mobile applications",
+            "order": 3,
+            "color": "#a855f7",
+            "created_at": now
+        },
+        {
+            "category_id": "cat_data_ai",
+            "name": "Data Science & AI",
+            "slug": "data-science-ai",
+            "parent_id": None,
+            "icon": "Brain",
+            "description": "Data analysis, machine learning, deep learning, and AI applications",
+            "order": 4,
+            "color": "#f97316",
+            "created_at": now
+        },
+        {
+            "category_id": "cat_prompt",
+            "name": "AI & Prompt Engineering",
+            "slug": "ai-prompt-engineering",
+            "parent_id": None,
+            "icon": "Sparkles",
+            "description": "Master AI tools, prompt engineering, and AI-assisted development",
+            "order": 5,
+            "color": "#8b5cf6",
+            "created_at": now
+        },
+        {
+            "category_id": "cat_dsa",
+            "name": "Algorithms & DSA",
+            "slug": "algorithms-dsa",
+            "parent_id": None,
+            "icon": "Layers",
+            "description": "Data structures, algorithms, and competitive programming",
+            "order": 6,
+            "color": "#eab308",
+            "created_at": now
+        },
+        {
+            "category_id": "cat_soft_eng",
+            "name": "Software Engineering",
+            "slug": "software-engineering",
+            "parent_id": None,
+            "icon": "GitBranch",
+            "description": "Best practices, design patterns, testing, and professional development",
+            "order": 7,
+            "color": "#06b6d4",
+            "created_at": now
+        },
+        {
+            "category_id": "cat_cloud",
+            "name": "Cloud & DevOps",
+            "slug": "cloud-devops",
+            "parent_id": None,
+            "icon": "Cloud",
+            "description": "Cloud platforms, containerization, CI/CD, and infrastructure",
+            "order": 8,
+            "color": "#6366f1",
+            "created_at": now
+        }
+    ]
+    
+    await db.doc_categories.insert_many(categories)
+    
+    # Seed Sample Articles
+    articles = [
+        {
+            "article_id": "doc_python_intro",
+            "category_id": "cat_prog_lang",
+            "title": "Python Programming: Complete Beginner's Guide",
+            "slug": "python-beginners-guide",
+            "content": """# Python Programming: Complete Beginner's Guide
+
+Welcome to the world of Python programming! This comprehensive guide will take you from zero to writing your first Python programs.
+
+## What is Python?
+
+Python is a high-level, interpreted programming language known for its simplicity and readability. It was created by Guido van Rossum and first released in 1991.
+
+## Why Learn Python?
+
+- **Easy to Learn**: Python has a clean, readable syntax
+- **Versatile**: Web development, data science, AI, automation
+- **Large Community**: Extensive libraries and support
+- **In-Demand**: One of the most sought-after programming skills
+
+## Getting Started
+
+### Installation
+
+```bash
+# Download from python.org or use package manager
+# macOS
+brew install python3
+
+# Windows - Download from python.org
+
+# Linux
+sudo apt install python3
+```
+
+### Your First Program
+
+```python
+# hello.py
+print("Hello, World!")
+
+# Variables
+name = "Alice"
+age = 25
+is_student = True
+
+# Basic operations
+sum = 10 + 5
+greeting = f"Hello, {name}!"
+print(greeting)
+```
+
+## Data Types
+
+Python has several built-in data types:
+
+| Type | Example | Description |
+|------|---------|-------------|
+| int | `42` | Integer numbers |
+| float | `3.14` | Decimal numbers |
+| str | `"hello"` | Text strings |
+| bool | `True` | Boolean values |
+| list | `[1, 2, 3]` | Ordered collection |
+| dict | `{"key": "value"}` | Key-value pairs |
+
+## Control Flow
+
+```python
+# If statements
+if age >= 18:
+    print("Adult")
+elif age >= 13:
+    print("Teenager")
+else:
+    print("Child")
+
+# Loops
+for i in range(5):
+    print(i)
+
+while count > 0:
+    count -= 1
+```
+
+## Functions
+
+```python
+def greet(name, greeting="Hello"):
+    return f"{greeting}, {name}!"
+
+# Usage
+message = greet("Alice")
+print(message)  # Hello, Alice!
+```
+
+## Next Steps
+
+1. Practice with coding exercises
+2. Build small projects
+3. Learn about object-oriented programming
+4. Explore Python libraries (pandas, numpy, flask)
+
+Happy coding! 🐍
+""",
+            "excerpt": "Learn Python from scratch with this comprehensive beginner's guide covering installation, syntax, data types, and more.",
+            "difficulty_level": "beginner",
+            "estimated_reading_time": 15,
+            "tags": ["python", "programming", "beginner", "tutorial"],
+            "view_count": 2500,
+            "helpful_count": 180,
+            "is_published": True,
+            "is_featured": True,
+            "created_at": now,
+            "updated_at": now
+        },
+        {
+            "article_id": "doc_js_intro",
+            "category_id": "cat_prog_lang",
+            "title": "JavaScript Fundamentals: Modern ES6+ Guide",
+            "slug": "javascript-fundamentals",
+            "content": """# JavaScript Fundamentals: Modern ES6+ Guide
+
+Master modern JavaScript with this comprehensive guide to ES6+ features.
+
+## Introduction
+
+JavaScript is the language of the web, powering interactive websites and web applications.
+
+## Variables
+
+```javascript
+// Modern variable declarations
+const name = "Alice";  // Cannot be reassigned
+let age = 25;          // Block-scoped, can be reassigned
+var legacy = "old";    // Function-scoped (avoid)
+
+// Template literals
+const greeting = `Hello, ${name}!`;
+```
+
+## Arrow Functions
+
+```javascript
+// Traditional function
+function add(a, b) {
+    return a + b;
+}
+
+// Arrow function
+const add = (a, b) => a + b;
+
+// With multiple statements
+const greet = (name) => {
+    const message = `Hello, ${name}!`;
+    return message;
+};
+```
+
+## Destructuring
+
+```javascript
+// Object destructuring
+const user = { name: "Alice", age: 25, city: "NYC" };
+const { name, age } = user;
+
+// Array destructuring
+const colors = ["red", "green", "blue"];
+const [first, second] = colors;
+
+// With defaults
+const { role = "user" } = user;
+```
+
+## Spread & Rest
+
+```javascript
+// Spread operator
+const arr1 = [1, 2, 3];
+const arr2 = [...arr1, 4, 5];
+
+const obj1 = { a: 1 };
+const obj2 = { ...obj1, b: 2 };
+
+// Rest parameters
+const sum = (...numbers) => {
+    return numbers.reduce((a, b) => a + b, 0);
+};
+```
+
+## Async/Await
+
+```javascript
+// Modern async code
+async function fetchUser(id) {
+    try {
+        const response = await fetch(`/api/users/${id}`);
+        const user = await response.json();
+        return user;
+    } catch (error) {
+        console.error("Failed to fetch user:", error);
+    }
+}
+```
+
+## Modules
+
+```javascript
+// Export
+export const API_URL = "https://api.example.com";
+export function fetchData() { /* ... */ }
+export default class App { /* ... */ }
+
+// Import
+import App, { API_URL, fetchData } from "./app.js";
+```
+
+Keep practicing and building projects! 🚀
+""",
+            "excerpt": "Master modern JavaScript ES6+ features including arrow functions, destructuring, async/await, and modules.",
+            "difficulty_level": "beginner",
+            "estimated_reading_time": 12,
+            "tags": ["javascript", "es6", "programming", "web"],
+            "view_count": 2100,
+            "helpful_count": 156,
+            "is_published": True,
+            "is_featured": True,
+            "created_at": now,
+            "updated_at": now
+        },
+        {
+            "article_id": "doc_react_intro",
+            "category_id": "cat_web_dev",
+            "title": "React.js: Building Modern User Interfaces",
+            "slug": "react-introduction",
+            "content": """# React.js: Building Modern User Interfaces
+
+Learn how to build interactive UIs with React, the popular JavaScript library.
+
+## What is React?
+
+React is a JavaScript library for building user interfaces, created by Facebook.
+
+## Core Concepts
+
+### Components
+
+```jsx
+// Function component
+function Welcome({ name }) {
+    return <h1>Hello, {name}!</h1>;
+}
+
+// Usage
+<Welcome name="Alice" />
+```
+
+### State with Hooks
+
+```jsx
+import { useState } from 'react';
+
+function Counter() {
+    const [count, setCount] = useState(0);
+    
+    return (
+        <div>
+            <p>Count: {count}</p>
+            <button onClick={() => setCount(count + 1)}>
+                Increment
+            </button>
+        </div>
+    );
+}
+```
+
+### Effects
+
+```jsx
+import { useState, useEffect } from 'react';
+
+function UserProfile({ userId }) {
+    const [user, setUser] = useState(null);
+    
+    useEffect(() => {
+        async function fetchUser() {
+            const response = await fetch(`/api/users/${userId}`);
+            const data = await response.json();
+            setUser(data);
+        }
+        fetchUser();
+    }, [userId]);
+    
+    if (!user) return <p>Loading...</p>;
+    
+    return <h1>{user.name}</h1>;
+}
+```
+
+## Best Practices
+
+1. Keep components small and focused
+2. Use meaningful component names
+3. Lift state up when needed
+4. Use custom hooks for reusable logic
+
+Happy building! ⚛️
+""",
+            "excerpt": "Learn React.js fundamentals including components, hooks, state management, and best practices.",
+            "difficulty_level": "intermediate",
+            "estimated_reading_time": 18,
+            "tags": ["react", "javascript", "frontend", "web"],
+            "view_count": 1800,
+            "helpful_count": 142,
+            "is_published": True,
+            "is_featured": True,
+            "created_at": now,
+            "updated_at": now
+        },
+        {
+            "article_id": "doc_prompt_eng",
+            "category_id": "cat_prompt",
+            "title": "Prompt Engineering: Master AI Communication",
+            "slug": "prompt-engineering-guide",
+            "content": """# Prompt Engineering: Master AI Communication
+
+Learn how to effectively communicate with AI models to get the best results.
+
+## What is Prompt Engineering?
+
+Prompt engineering is the art of crafting effective instructions for AI models.
+
+## Key Techniques
+
+### 1. Be Specific
+
+❌ Bad: "Write about dogs"
+✅ Good: "Write a 200-word article about the health benefits of owning dogs for elderly people"
+
+### 2. Provide Context
+
+```
+You are an expert Python developer with 10 years of experience.
+Help me optimize this code for better performance:
+[code here]
+```
+
+### 3. Use Examples (Few-Shot)
+
+```
+Convert these sentences to formal English:
+
+Input: "gonna head out now"
+Output: "I will be leaving now."
+
+Input: "wanna grab some food?"
+Output: "Would you like to get something to eat?"
+
+Input: "can't make it tmrw"
+Output: [AI completes]
+```
+
+### 4. Chain of Thought
+
+```
+Solve this step by step:
+1. First, identify the problem
+2. Then, list possible solutions
+3. Evaluate each solution
+4. Choose the best approach
+5. Implement the solution
+```
+
+## Best Practices
+
+- Start simple, iterate and refine
+- Test with different phrasings
+- Include constraints and requirements
+- Use role-playing for better context
+
+Master these techniques to become an AI power user! 🤖
+""",
+            "excerpt": "Master prompt engineering techniques to communicate effectively with AI models and get better results.",
+            "difficulty_level": "beginner",
+            "estimated_reading_time": 10,
+            "tags": ["ai", "prompt-engineering", "chatgpt", "llm"],
+            "view_count": 3200,
+            "helpful_count": 280,
+            "is_published": True,
+            "is_featured": True,
+            "created_at": now,
+            "updated_at": now
+        },
+        {
+            "article_id": "doc_git_basics",
+            "category_id": "cat_soft_eng",
+            "title": "Git & GitHub: Version Control Essentials",
+            "slug": "git-github-essentials",
+            "content": """# Git & GitHub: Version Control Essentials
+
+Master version control with Git and collaborate effectively using GitHub.
+
+## Getting Started
+
+```bash
+# Configure Git
+git config --global user.name "Your Name"
+git config --global user.email "you@example.com"
+
+# Initialize a repository
+git init
+
+# Clone a repository
+git clone https://github.com/user/repo.git
+```
+
+## Basic Workflow
+
+```bash
+# Check status
+git status
+
+# Stage changes
+git add filename.js
+git add .  # Stage all
+
+# Commit changes
+git commit -m "Add feature X"
+
+# Push to remote
+git push origin main
+```
+
+## Branching
+
+```bash
+# Create branch
+git branch feature-login
+
+# Switch branch
+git checkout feature-login
+# or
+git switch feature-login
+
+# Create and switch
+git checkout -b feature-login
+
+# Merge branch
+git checkout main
+git merge feature-login
+```
+
+## Collaboration
+
+1. Fork the repository
+2. Clone your fork
+3. Create a feature branch
+4. Make changes and commit
+5. Push to your fork
+6. Open a Pull Request
+
+Happy collaborating! 🌿
+""",
+            "excerpt": "Learn Git version control and GitHub collaboration essentials for professional development.",
+            "difficulty_level": "beginner",
+            "estimated_reading_time": 12,
+            "tags": ["git", "github", "version-control", "collaboration"],
+            "view_count": 1950,
+            "helpful_count": 165,
+            "is_published": True,
+            "is_featured": True,
+            "created_at": now,
+            "updated_at": now
+        },
+        {
+            "article_id": "doc_dsa_arrays",
+            "category_id": "cat_dsa",
+            "title": "Arrays & Strings: Interview Preparation",
+            "slug": "arrays-strings-interview",
+            "content": """# Arrays & Strings: Interview Preparation
+
+Master array and string manipulation for coding interviews.
+
+## Common Patterns
+
+### Two Pointers
+
+```python
+def two_sum_sorted(nums, target):
+    left, right = 0, len(nums) - 1
+    while left < right:
+        current_sum = nums[left] + nums[right]
+        if current_sum == target:
+            return [left, right]
+        elif current_sum < target:
+            left += 1
+        else:
+            right -= 1
+    return []
+```
+
+### Sliding Window
+
+```python
+def max_sum_subarray(nums, k):
+    window_sum = sum(nums[:k])
+    max_sum = window_sum
+    
+    for i in range(k, len(nums)):
+        window_sum += nums[i] - nums[i-k]
+        max_sum = max(max_sum, window_sum)
+    
+    return max_sum
+```
+
+### Hash Map
+
+```python
+def two_sum(nums, target):
+    seen = {}
+    for i, num in enumerate(nums):
+        complement = target - num
+        if complement in seen:
+            return [seen[complement], i]
+        seen[num] = i
+    return []
+```
+
+## Practice Problems
+
+1. Reverse a string in-place
+2. Find duplicates in an array
+3. Longest substring without repeating characters
+4. Container with most water
+5. 3Sum problem
+
+Keep practicing! 💪
+""",
+            "excerpt": "Prepare for coding interviews with essential array and string algorithms and patterns.",
+            "difficulty_level": "intermediate",
+            "estimated_reading_time": 15,
+            "tags": ["algorithms", "dsa", "interview", "python"],
+            "view_count": 2800,
+            "helpful_count": 220,
+            "is_published": True,
+            "is_featured": True,
+            "created_at": now,
+            "updated_at": now
+        }
+    ]
+    
+    await db.doc_articles.insert_many(articles)
+    
+    # Seed Learning Paths
+    paths = [
+        {
+            "path_id": "path_fullstack",
+            "title": "Complete Beginner to Full Stack Developer",
+            "slug": "full-stack-developer",
+            "description": "Go from zero coding experience to building complete web applications with React, Node.js, and databases.",
+            "difficulty_level": "beginner",
+            "estimated_duration": "12 weeks",
+            "topics": ["HTML", "CSS", "JavaScript", "React", "Node.js", "MongoDB", "Git"],
+            "steps": [
+                {"order": 1, "title": "Web Fundamentals", "description": "Learn HTML, CSS, and how the web works", "duration": "2 weeks"},
+                {"order": 2, "title": "JavaScript Basics", "description": "Master JavaScript fundamentals", "duration": "2 weeks"},
+                {"order": 3, "title": "React Development", "description": "Build interactive UIs with React", "duration": "3 weeks"},
+                {"order": 4, "title": "Backend with Node.js", "description": "Create APIs with Express", "duration": "2 weeks"},
+                {"order": 5, "title": "Database Integration", "description": "Work with MongoDB", "duration": "1 week"},
+                {"order": 6, "title": "Full Stack Project", "description": "Build a complete application", "duration": "2 weeks"}
+            ],
+            "prerequisites": ["Basic computer skills", "Curiosity to learn"],
+            "outcomes": ["Build complete web applications", "Deploy to production", "Job-ready portfolio"],
+            "enrolled_count": 1250,
+            "completion_rate": 68.5,
+            "is_featured": True,
+            "is_published": True,
+            "created_at": now
+        },
+        {
+            "path_id": "path_ai_prompt",
+            "title": "AI & Prompt Engineering Mastery",
+            "slug": "ai-prompt-engineering",
+            "description": "Master the art of working with AI tools and become proficient in prompt engineering techniques.",
+            "difficulty_level": "beginner",
+            "estimated_duration": "6 weeks",
+            "topics": ["ChatGPT", "Prompt Engineering", "AI Tools", "GitHub Copilot", "LLMs"],
+            "steps": [
+                {"order": 1, "title": "AI Fundamentals", "description": "Understanding LLMs and AI capabilities", "duration": "1 week"},
+                {"order": 2, "title": "Prompt Engineering Basics", "description": "Learn effective prompting techniques", "duration": "1 week"},
+                {"order": 3, "title": "Advanced Prompting", "description": "Chain-of-thought and few-shot learning", "duration": "1 week"},
+                {"order": 4, "title": "AI-Assisted Coding", "description": "Using Copilot and AI for development", "duration": "2 weeks"},
+                {"order": 5, "title": "Building AI Apps", "description": "Integrate AI APIs in applications", "duration": "1 week"}
+            ],
+            "prerequisites": ["Basic programming knowledge"],
+            "outcomes": ["Master prompt engineering", "Use AI tools effectively", "Build AI-powered applications"],
+            "enrolled_count": 980,
+            "completion_rate": 75.2,
+            "is_featured": True,
+            "is_published": True,
+            "created_at": now
+        },
+        {
+            "path_id": "path_dsa",
+            "title": "Algorithms & Data Structures Mastery",
+            "slug": "algorithms-data-structures",
+            "description": "Prepare for technical interviews with comprehensive DSA training.",
+            "difficulty_level": "intermediate",
+            "estimated_duration": "12 weeks",
+            "topics": ["Arrays", "Trees", "Graphs", "Dynamic Programming", "Sorting", "Searching"],
+            "steps": [
+                {"order": 1, "title": "Arrays & Strings", "description": "Master array manipulation", "duration": "2 weeks"},
+                {"order": 2, "title": "Linked Lists & Stacks", "description": "Linear data structures", "duration": "1 week"},
+                {"order": 3, "title": "Trees & Binary Search", "description": "Tree traversals and BST", "duration": "2 weeks"},
+                {"order": 4, "title": "Graphs & BFS/DFS", "description": "Graph algorithms", "duration": "2 weeks"},
+                {"order": 5, "title": "Dynamic Programming", "description": "Optimization techniques", "duration": "3 weeks"},
+                {"order": 6, "title": "Mock Interviews", "description": "Practice with real problems", "duration": "2 weeks"}
+            ],
+            "prerequisites": ["Programming in any language", "Basic math"],
+            "outcomes": ["Ace technical interviews", "Problem-solving skills", "Algorithm analysis"],
+            "enrolled_count": 2100,
+            "completion_rate": 52.8,
+            "is_featured": True,
+            "is_published": True,
+            "created_at": now
+        }
+    ]
+    
+    await db.learning_paths.insert_many(paths)
+    
+    return {
+        "message": "Documentation seeded successfully",
+        "categories": len(categories),
+        "articles": len(articles),
+        "paths": len(paths)
+    }
+
+
+@api_router.post("/seed/articles")
+async def seed_comprehensive_articles():
+    """Seed the database with comprehensive educational articles"""
+    from seed_articles import get_all_seed_articles, get_article_stats
+    
+    try:
+        articles = get_all_seed_articles()
+        
+        # Upsert articles (update if exists, insert if not)
+        updated = 0
+        inserted = 0
+        
+        for article in articles:
+            result = await db.doc_articles.update_one(
+                {"slug": article["slug"]},
+                {"$set": article},
+                upsert=True
+            )
+            if result.upserted_id:
+                inserted += 1
+            elif result.modified_count > 0:
+                updated += 1
+        
+        stats = get_article_stats()
+        
+        return {
+            "message": "Articles seeded successfully",
+            "inserted": inserted,
+            "updated": updated,
+            "total_articles": stats['total_articles'],
+            "total_code_examples": stats['total_code_examples'],
+            "total_exercises": stats['total_exercises'],
+            "total_quiz_questions": stats['total_quiz_questions']
+        }
+    except Exception as e:
+        logger.error(f"Error seeding articles: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ========================
+# Enhanced Article API Endpoints
+# ========================
+
+@api_router.get("/docs/articles")
+async def get_all_articles(
+    category: Optional[str] = None,
+    topic: Optional[str] = None,
+    difficulty: Optional[str] = None,
+    search: Optional[str] = None,
+    page: int = 1,
+    limit: int = 10,
+    sort_by: str = "created_at",
+    sort_order: str = "desc"
+):
+    """Get all articles with filtering, search, and pagination"""
+    query = {"is_published": True}
+    
+    if category:
+        query["category_id"] = category
+    if topic:
+        query["topic"] = topic
+    if difficulty:
+        query["difficulty_level"] = difficulty
+    if search:
+        query["$or"] = [
+            {"title": {"$regex": search, "$options": "i"}},
+            {"content": {"$regex": search, "$options": "i"}},
+            {"tags": {"$regex": search, "$options": "i"}}
+        ]
+    
+    # Calculate skip
+    skip = (page - 1) * limit
+    
+    # Sort direction
+    sort_direction = -1 if sort_order == "desc" else 1
+    
+    # Get total count
+    total = await db.doc_articles.count_documents(query)
+    
+    # Get articles
+    articles = await db.doc_articles.find(
+        query,
+        {
+            "_id": 0,
+            "article_id": 1,
+            "slug": 1,
+            "title": 1,
+            "subtitle": 1,
+            "category_id": 1,
+            "topic": 1,
+            "subtopic": 1,
+            "difficulty_level": 1,
+            "estimated_reading_time": 1,
+            "tags": 1,
+            "view_count": 1,
+            "helpful_count": 1,
+            "created_at": 1,
+            "author": 1
+        }
+    ).sort(sort_by, sort_direction).skip(skip).limit(limit).to_list(limit)
+    
+    return {
+        "articles": articles,
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "total_pages": (total + limit - 1) // limit
+    }
+
+
+@api_router.get("/docs/articles/{slug}")
+async def get_article_by_slug(slug: str):
+    """Get a single article by slug with full content"""
+    article = await db.doc_articles.find_one(
+        {"slug": slug, "is_published": True},
+        {"_id": 0}
+    )
+    
+    if not article:
+        raise HTTPException(status_code=404, detail="Article not found")
+    
+    # Increment view count
+    await db.doc_articles.update_one(
+        {"slug": slug},
+        {"$inc": {"view_count": 1}}
+    )
+    
+    # Get related articles
+    if article.get("related_articles"):
+        related = await db.doc_articles.find(
+            {"slug": {"$in": article["related_articles"]}, "is_published": True},
+            {"_id": 0, "slug": 1, "title": 1, "difficulty_level": 1, "estimated_reading_time": 1}
+        ).to_list(10)
+        article["related_articles_data"] = related
+    
+    return article
+
+
+@api_router.get("/docs/articles/{slug}/exercises")
+async def get_article_exercises(slug: str):
+    """Get exercises for a specific article"""
+    article = await db.doc_articles.find_one(
+        {"slug": slug, "is_published": True},
+        {"_id": 0, "exercises": 1, "title": 1}
+    )
+    
+    if not article:
+        raise HTTPException(status_code=404, detail="Article not found")
+    
+    return {
+        "title": article.get("title"),
+        "exercises": article.get("exercises", [])
+    }
+
+
+@api_router.get("/docs/articles/{slug}/quiz")
+async def get_article_quiz(slug: str):
+    """Get quiz questions for a specific article"""
+    article = await db.doc_articles.find_one(
+        {"slug": slug, "is_published": True},
+        {"_id": 0, "quiz_questions": 1, "title": 1}
+    )
+    
+    if not article:
+        raise HTTPException(status_code=404, detail="Article not found")
+    
+    # Remove correct answers for client-side quiz (don't reveal answers)
+    questions = article.get("quiz_questions", [])
+    for q in questions:
+        q.pop("correct_answer", None)
+        q.pop("explanation", None)
+    
+    return {
+        "title": article.get("title"),
+        "questions": questions
+    }
+
+
+@api_router.post("/docs/articles/{slug}/quiz/submit")
+async def submit_quiz_answers(slug: str, request: Request):
+    """Submit quiz answers and get results"""
+    body = await request.json()
+    user_answers = body.get("answers", {})  # {question_id: selected_index}
+    
+    article = await db.doc_articles.find_one(
+        {"slug": slug, "is_published": True},
+        {"_id": 0, "quiz_questions": 1, "title": 1}
+    )
+    
+    if not article:
+        raise HTTPException(status_code=404, detail="Article not found")
+    
+    questions = article.get("quiz_questions", [])
+    results = []
+    correct_count = 0
+    
+    for q in questions:
+        q_id = q.get("id")
+        user_answer = user_answers.get(q_id)
+        is_correct = user_answer == q.get("correct_answer")
+        
+        if is_correct:
+            correct_count += 1
+        
+        results.append({
+            "question_id": q_id,
+            "user_answer": user_answer,
+            "correct_answer": q.get("correct_answer"),
+            "is_correct": is_correct,
+            "explanation": q.get("explanation", "")
+        })
+    
+    total = len(questions)
+    score = (correct_count / total * 100) if total > 0 else 0
+    
+    return {
+        "title": article.get("title"),
+        "results": results,
+        "score": round(score, 1),
+        "correct_count": correct_count,
+        "total_questions": total,
+        "passed": score >= 70
+    }
+
+
+@api_router.post("/docs/articles/{slug}/helpful")
+async def mark_article_helpful(slug: str, request: Request):
+    """Mark an article as helpful or not helpful"""
+    body = await request.json()
+    is_helpful = body.get("helpful", True)
+    
+    if is_helpful:
+        await db.doc_articles.update_one(
+            {"slug": slug},
+            {"$inc": {"helpful_count": 1}}
+        )
+    else:
+        await db.doc_articles.update_one(
+            {"slug": slug},
+            {"$inc": {"not_helpful_count": 1}}
+        )
+    
+    return {"message": "Feedback recorded", "helpful": is_helpful}
+
+
+@api_router.get("/docs/categories/{category_slug}/articles")
+async def get_articles_by_category(
+    category_slug: str,
+    page: int = 1,
+    limit: int = 10
+):
+    """Get all articles for a specific category"""
+    # Map slug to category_id
+    category_map = {
+        "programming-languages": "programming-languages",
+        "web-development": "web-development",
+        "mobile-development": "mobile-development",
+        "data-science-ai": "data-science-ai",
+        "ai-prompt-engineering": "ai-prompt-engineering",
+        "algorithms-dsa": "algorithms-dsa",
+        "software-engineering": "software-engineering",
+        "cloud-devops": "cloud-devops"
+    }
+    
+    category_id = category_map.get(category_slug, category_slug)
+    
+    skip = (page - 1) * limit
+    
+    total = await db.doc_articles.count_documents({
+        "category_id": category_id,
+        "is_published": True
+    })
+    
+    articles = await db.doc_articles.find(
+        {"category_id": category_id, "is_published": True},
+        {
+            "_id": 0,
+            "article_id": 1,
+            "slug": 1,
+            "title": 1,
+            "subtitle": 1,
+            "topic": 1,
+            "subtopic": 1,
+            "difficulty_level": 1,
+            "estimated_reading_time": 1,
+            "tags": 1,
+            "view_count": 1,
+            "created_at": 1
+        }
+    ).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    
+    return {
+        "category": category_slug,
+        "articles": articles,
+        "total": total,
+        "page": page,
+        "total_pages": (total + limit - 1) // limit
+    }
+
+
+@api_router.get("/docs/topics/{topic}/articles")
+async def get_articles_by_topic(
+    topic: str,
+    page: int = 1,
+    limit: int = 10
+):
+    """Get all articles for a specific topic (e.g., python, react, etc.)"""
+    skip = (page - 1) * limit
+    
+    total = await db.doc_articles.count_documents({
+        "topic": topic,
+        "is_published": True
+    })
+    
+    articles = await db.doc_articles.find(
+        {"topic": topic, "is_published": True},
+        {"_id": 0}
+    ).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    
+    return {
+        "topic": topic,
+        "articles": articles,
+        "total": total,
+        "page": page,
+        "total_pages": (total + limit - 1) // limit
+    }
+
+
+@api_router.get("/docs/search")
+async def search_articles(
+    q: str,
+    category: Optional[str] = None,
+    difficulty: Optional[str] = None,
+    limit: int = 20
+):
+    """Full-text search across articles"""
+    query = {
+        "is_published": True,
+        "$or": [
+            {"title": {"$regex": q, "$options": "i"}},
+            {"subtitle": {"$regex": q, "$options": "i"}},
+            {"content": {"$regex": q, "$options": "i"}},
+            {"tags": {"$regex": q, "$options": "i"}},
+            {"meta_description": {"$regex": q, "$options": "i"}}
+        ]
+    }
+    
+    if category:
+        query["category_id"] = category
+    if difficulty:
+        query["difficulty_level"] = difficulty
+    
+    articles = await db.doc_articles.find(
+        query,
+        {
+            "_id": 0,
+            "slug": 1,
+            "title": 1,
+            "subtitle": 1,
+            "category_id": 1,
+            "difficulty_level": 1,
+            "estimated_reading_time": 1,
+            "tags": 1
+        }
+    ).limit(limit).to_list(limit)
+    
+    return {
+        "query": q,
+        "results": articles,
+        "count": len(articles)
+    }
+
+
+@api_router.get("/docs/stats")
+async def get_documentation_stats():
+    """Get overall documentation statistics"""
+    total_articles = await db.doc_articles.count_documents({"is_published": True})
+    total_categories = await db.doc_categories.count_documents({})
+    total_paths = await db.learning_paths.count_documents({"is_published": True})
+    
+    # Get articles by category
+    pipeline = [
+        {"$match": {"is_published": True}},
+        {"$group": {"_id": "$category_id", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}}
+    ]
+    by_category = await db.doc_articles.aggregate(pipeline).to_list(20)
+    
+    # Get articles by difficulty
+    difficulty_pipeline = [
+        {"$match": {"is_published": True}},
+        {"$group": {"_id": "$difficulty_level", "count": {"$sum": 1}}}
+    ]
+    by_difficulty = await db.doc_articles.aggregate(difficulty_pipeline).to_list(10)
+    
+    # Get most viewed articles
+    popular = await db.doc_articles.find(
+        {"is_published": True},
+        {"_id": 0, "slug": 1, "title": 1, "view_count": 1}
+    ).sort("view_count", -1).limit(5).to_list(5)
+    
+    return {
+        "total_articles": total_articles,
+        "total_categories": total_categories,
+        "total_learning_paths": total_paths,
+        "by_category": {item["_id"]: item["count"] for item in by_category},
+        "by_difficulty": {item["_id"]: item["count"] for item in by_difficulty if item["_id"]},
+        "popular_articles": popular
+    }
+
+
+# ========================
 # Health Check
 # ========================
 
@@ -1619,3 +3543,7 @@ app.add_middleware(
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8001)

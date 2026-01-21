@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { Loader2 } from 'lucide-react';
 
 const AuthCallback = () => {
-  const { handleOAuthCallback, processSession } = useAuth();
+  const { handleOAuthCallback } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { provider } = useParams(); // 'google' or 'github'
@@ -28,18 +28,6 @@ const AuthCallback = () => {
           return;
         }
 
-        // Legacy session-based auth (fallback)
-        const hash = location.hash;
-        const params = new URLSearchParams(hash.replace('#', ''));
-        const sessionId = params.get('session_id');
-
-        if (sessionId) {
-          await processSession(sessionId);
-          globalThis.history.replaceState(null, '', '/dashboard');
-          navigate('/dashboard', { replace: true });
-          return;
-        }
-
         // No valid auth data found
         console.error('No valid auth data found');
         navigate('/signin', { replace: true });
@@ -50,7 +38,7 @@ const AuthCallback = () => {
     };
 
     handleAuth();
-  }, [location.search, location.hash, navigate, provider, handleOAuthCallback, processSession]);
+  }, [location.search, navigate, provider, handleOAuthCallback]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background" data-testid="auth-callback">
