@@ -350,28 +350,138 @@ pytest
 
 ## 📦 Deployment
 
-### Docker (Recommended)
+This project uses a **split deployment** approach:
+- **Frontend** → Vercel (free tier available)
+- **Backend** → Render (free tier available)
+
+### 🔷 Step 1: Deploy Backend to Render
+
+1. **Create a Render Account**
+   - Go to [render.com](https://render.com) and sign up
+   - Connect your GitHub account
+
+2. **Create a New Web Service**
+   - Click **"New +"** → **"Web Service"**
+   - Connect your GitHub repository
+   - Configure the service:
+     ```
+     Name: codelearnhub-backend
+     Region: Oregon (US West)
+     Branch: main
+     Root Directory: backend
+     Runtime: Python 3
+     Build Command: pip install -r requirements.txt
+     Start Command: uvicorn server:app --host 0.0.0.0 --port $PORT
+     ```
+
+3. **Add Environment Variables**
+   - In the Render dashboard, go to **Environment** tab
+   - Add these variables:
+   
+   | Variable | Value |
+   |----------|-------|
+   | `MONGO_URL` | Your MongoDB Atlas connection string |
+   | `DB_NAME` | `codelearnhub` |
+   | `FRONTEND_URL` | `https://your-app.vercel.app` (update after Vercel deploy) |
+   | `CORS_ORIGINS` | `https://your-app.vercel.app` |
+   | `GITHUB_CLIENT_ID` | Your GitHub OAuth App Client ID |
+   | `GITHUB_CLIENT_SECRET` | Your GitHub OAuth App Secret |
+   | `GOOGLE_CLIENT_ID` | Your Google OAuth Client ID |
+   | `GOOGLE_CLIENT_SECRET` | Your Google OAuth Secret |
+
+4. **Deploy**
+   - Click **"Create Web Service"**
+   - Wait for deployment (takes 2-5 minutes)
+   - Note your backend URL: `https://your-backend.onrender.com`
+
+### 🔷 Step 2: Deploy Frontend to Vercel
+
+1. **Create a Vercel Account**
+   - Go to [vercel.com](https://vercel.com) and sign up
+   - Connect your GitHub account
+
+2. **Import Project**
+   - Click **"Add New..."** → **"Project"**
+   - Select your GitHub repository
+
+3. **Configure Project**
+   ```
+   Framework Preset: Create React App
+   Root Directory: frontend
+   Build Command: npm run build (or yarn build)
+   Output Directory: build
+   Install Command: npm install (or yarn install)
+   ```
+
+4. **Add Environment Variables**
+   - In the project settings, go to **Environment Variables**
+   - Add:
+   
+   | Variable | Value |
+   |----------|-------|
+   | `REACT_APP_BACKEND_URL` | `https://your-backend.onrender.com` |
+   | `REACT_APP_ENV` | `production` |
+
+5. **Deploy**
+   - Click **"Deploy"**
+   - Wait for deployment (takes 1-2 minutes)
+   - Your app is live at: `https://your-app.vercel.app`
+
+### 🔷 Step 3: Update Backend CORS
+
+After getting your Vercel URL:
+1. Go back to Render dashboard
+2. Update `FRONTEND_URL` and `CORS_ORIGINS` with your Vercel URL
+3. Redeploy the backend
+
+### 🔷 Step 4: Configure OAuth Callbacks
+
+**GitHub OAuth:**
+1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
+2. Edit your OAuth App
+3. Update **Authorization callback URL** to:
+   ```
+   https://your-backend.onrender.com/api/auth/callback/github
+   ```
+
+**Google OAuth:**
+1. Go to [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+2. Edit your OAuth 2.0 Client
+3. Add to **Authorized redirect URIs**:
+   ```
+   https://your-backend.onrender.com/api/auth/callback/google
+   ```
+
+### 🔷 Step 5: Seed the Database
+
+After deployment, seed your database:
+
+```bash
+curl -X POST https://your-backend.onrender.com/api/seed/articles
+```
+
+Or visit: `https://your-backend.onrender.com/docs` and use the Swagger UI.
+
+---
+
+### 🐳 Alternative: Docker Deployment
 
 ```bash
 # Build and run with Docker Compose
 docker-compose up --build
 ```
 
-### Manual Deployment
+### 📋 Deployment Checklist
 
-**Backend (Render/Railway/Heroku):**
-```bash
-cd backend
-pip install gunicorn
-gunicorn server:app -w 4 -k uvicorn.workers.UvicornWorker
-```
-
-**Frontend (Vercel/Netlify):**
-```bash
-cd frontend
-npm run build
-# Deploy the 'build' folder
-```
+- [ ] MongoDB Atlas cluster created and IP whitelist configured (allow 0.0.0.0/0 for cloud services)
+- [ ] GitHub OAuth App created with correct callback URL
+- [ ] Google OAuth App created with correct redirect URI
+- [ ] Backend deployed to Render with all environment variables
+- [ ] Frontend deployed to Vercel with REACT_APP_BACKEND_URL set
+- [ ] Backend CORS updated with Vercel URL
+- [ ] Database seeded with initial articles
+- [ ] Test login with GitHub and Google
+- [ ] Test all major features
 
 ---
 

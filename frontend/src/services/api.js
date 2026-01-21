@@ -1,9 +1,35 @@
 import axios from 'axios';
 
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+// API Base URL - handles both development and production
+const getApiUrl = () => {
+  // Use environment variable if set
+  if (process.env.REACT_APP_BACKEND_URL) {
+    return `${process.env.REACT_APP_BACKEND_URL}/api`;
+  }
+  // Fallback for development
+  if (process.env.NODE_ENV === 'development') {
+    return 'http://localhost:8001/api';
+  }
+  // Production fallback - should be set via environment variable
+  return '/api';
+};
+
+const API = getApiUrl();
 
 // Configure axios defaults
 axios.defaults.withCredentials = true;
+
+// Add response interceptor for error handling
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Handle network errors gracefully
+    if (!error.response) {
+      console.error('Network error - please check your connection');
+    }
+    return Promise.reject(error);
+  }
+);
 
 // Projects API
 export const projectsApi = {

@@ -72,16 +72,6 @@ const ArticleAdminPage = () => {
     { value: 'advanced', label: 'Advanced' }
   ];
 
-  // Fetch articles
-  useEffect(() => {
-    fetchArticles();
-  }, [page, categoryFilter, difficultyFilter]);
-
-  // Fetch stats on mount
-  useEffect(() => {
-    fetchStats();
-  }, []);
-
   const fetchArticles = async () => {
     setLoading(true);
     try {
@@ -112,6 +102,17 @@ const ArticleAdminPage = () => {
       console.error('Error fetching stats:', error);
     }
   };
+
+  // Fetch articles when filters change
+  useEffect(() => {
+    fetchArticles();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, categoryFilter, difficultyFilter]);
+
+  // Fetch stats on mount
+  useEffect(() => {
+    fetchStats();
+  }, []);
 
   const handleSearch = (e) => {
     e.preventDefault();
