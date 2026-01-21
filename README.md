@@ -1,4 +1,4 @@
-# 🚀 CodeLearnHub
+# 🚀 LearnCodeOnline
 
 <div align="center">
 
@@ -415,9 +415,9 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ## 📞 Contact
 
-**Anil Veer Singh** - [@anilveersingh1308](https://github.com/anilveersingh1308)
+**Anil Singh** - [@anilveersingh1308](https://github.com/anilveersingh1308)
 
-Project Link: [https://github.com/anilveersingh1308/codelearn](https://github.com/anilveersingh1308/codelearn)
+Project Link: [https://github.com/anilveersingh1308/codelearn](https://github.com/anilveersingh1308/learncodeonline)
 
 ---
 
