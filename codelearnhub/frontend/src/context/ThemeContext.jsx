@@ -13,11 +13,8 @@ export const useTheme = () => {
 
 export const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(() => {
-    if (globalThis.window !== undefined) {
-      const stored = localStorage.getItem('theme');
-      if (stored) return stored;
-      return globalThis.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    }
+    // Always start in dark mode on every page load.
+    // Light mode code remains intact and can be re-enabled later.
     return 'dark';
   });
 

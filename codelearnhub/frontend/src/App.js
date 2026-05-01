@@ -1,6 +1,16 @@
 import PropTypes from 'prop-types';
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { Toaster } from "sonner";
+import { useEffect } from "react";
+
+// Scroll to top on every route change
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [pathname]);
+  return null;
+};
 
 // Context Providers
 import { ThemeProvider } from "./context/ThemeContext";
@@ -58,6 +68,7 @@ function App() {
     <ThemeProvider>
       <AuthProvider>
         <BrowserRouter>
+          <ScrollToTop />
           <div className="App">
             <Routes>
               {/* Dashboard - authenticated route */}

@@ -1,0 +1,16 @@
+[build]
+  base    = "codelearnhub/frontend"
+  command = "npm run build"
+  publish = "build"
+
+[build.environment]
+  NODE_VERSION       = "18"
+  NPM_FLAGS          = "--legacy-peer-deps"
+  GENERATE_SOURCEMAP = "false"
+  CI                 = "false"
+
+# SPA fallback — every route serves index.html (React Router handles client-side routing)
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200

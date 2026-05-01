@@ -67,13 +67,13 @@ const Navbar = () => {
 
           {/* Right Side Actions */}
           <div className="flex items-center gap-3">
-            {/* Theme Toggle */}
+            {/* Theme Toggle — hidden until light mode is re-enabled */}
             <Button
               variant="ghost"
               size="icon"
               onClick={toggleTheme}
               data-testid="theme-toggle"
-              className="rounded-lg"
+              className="rounded-lg hidden"
             >
               {theme === 'dark' ? (
                 <Sun className="h-5 w-5" />

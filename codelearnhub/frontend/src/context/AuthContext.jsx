@@ -4,7 +4,17 @@ import axios from 'axios';
 
 const AuthContext = createContext();
 
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const getAuthApiUrl = () => {
+  if (process.env.REACT_APP_BACKEND_URL) {
+    return `${process.env.REACT_APP_BACKEND_URL}/api`;
+  }
+  if (process.env.NODE_ENV === 'development') {
+    return 'http://localhost:8001/api';
+  }
+  return '/api';
+};
+
+const API = getAuthApiUrl();
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
