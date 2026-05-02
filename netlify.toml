@@ -5,9 +5,10 @@
 
 [build.environment]
   NODE_VERSION       = "20"
-  NPM_FLAGS          = "--legacy-peer-deps"
+  NPM_FLAGS          = "--legacy-peer-deps --no-audit --no-fund"
   GENERATE_SOURCEMAP = "false"
   CI                 = "false"
+  NODE_MODULES_CACHE = "false"
   REACT_APP_BACKEND_URL = "https://codelearn-hub-backend.onrender.com"
 
 [[scheduled.functions]]
