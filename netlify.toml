@@ -10,6 +10,10 @@
   CI                 = "false"
   REACT_APP_BACKEND_URL = "https://codelearn-hub-backend.onrender.com"
 
+[[scheduled.functions]]
+  name = "keep-render-awake"
+  cron = "*/10 * * * *"
+
 # SPA fallback — every route serves index.html (React Router handles client-side routing)
 [[redirects]]
   from   = "/*"
