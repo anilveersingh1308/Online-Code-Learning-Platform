@@ -8,6 +8,7 @@
   NPM_FLAGS          = "--legacy-peer-deps"
   GENERATE_SOURCEMAP = "false"
   CI                 = "false"
+  REACT_APP_BACKEND_URL = "https://codelearn-hub-backend.onrender.com"
 
 # SPA fallback — every route serves index.html (React Router handles client-side routing)
 [[redirects]]

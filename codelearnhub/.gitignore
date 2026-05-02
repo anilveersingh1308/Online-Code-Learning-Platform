@@ -38,6 +38,7 @@ dist
 .env.development
 backend/.env
 frontend/.env.local
+frontend/.env
 
 *token.json*
 *credentials.json*
